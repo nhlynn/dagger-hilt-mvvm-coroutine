@@ -1,5 +1,6 @@
 package com.linnitsolution.dagger_hilt_mvvm_coroutine.network
 
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.linnitsolution.dagger_hilt_mvvm_coroutine.utils.Constants
 import dagger.Module
@@ -20,20 +21,15 @@ import javax.inject.Singleton
 object AppModule {
 
     @Provides
-    @Singleton
-    fun providesApiService(): ApiService = Retrofit
-        .Builder()
-        .baseUrl(Constants.BASE_URL)
-        .client(getClient())
-        .addConverterFactory(GsonConverterFactory.create(gSon))
-        .build()
-        .create(ApiService::class.java)
+    fun provideBaseUrl() = Constants.BASE_URL
 
-    private val gSon = GsonBuilder()
+    @Provides
+    fun provideGson() = GsonBuilder()
         .setLenient()
-        .create()
+        .create()!!
 
-    private fun getClient(): OkHttpClient {
+    @Provides
+    fun getClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor()
         logging.level = HttpLoggingInterceptor.Level.BODY
 
@@ -51,4 +47,15 @@ object AppModule {
             .addInterceptor(logging)
             .build()
     }
+
+    @Provides
+    @Singleton
+    fun providesApiService(BASE_URL: String, gSon: Gson, client: OkHttpClient): ApiService =
+        Retrofit
+            .Builder()
+            .baseUrl(BASE_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create(gSon))
+            .build()
+            .create(ApiService::class.java)
 }
